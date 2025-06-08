@@ -58,7 +58,7 @@ jobs:
 
             - name: Update .csproj version
               run: |
-                sed -i "s|<Version>.*</Version>|<Version>${PACKAGE_VERSION}</Version>|g" WordList.Common.csproj
+                sed -i "s|<Version>.*</Version>|<Version>${PACKAGE_VERSION}</Version>|g" WordList.Data.Sql.csproj
                                   
             - name: Setup .NET SDK
               uses: actions/setup-dotnet@v4
