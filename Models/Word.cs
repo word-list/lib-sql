@@ -7,5 +7,5 @@ public class Word
     public int Offensiveness { get; set; }
     public int Sentiment { get; set; }
 
-    public List<WordType> WordTypes { get; set; } = [];
+    public string[] WordTypes { get; set; } = [];
 }

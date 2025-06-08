@@ -31,19 +31,7 @@
         <DebugType>None</DebugType>
         <DebugSymbols>false</DebugSymbols>
     </PropertyGroup>
-    <PropertyGroup>
-        <InterceptorsNamespaces>
-            $(InterceptorsNamespaces);Microsoft.EntityFrameworkCore.GeneratedInterceptors</InterceptorsNamespaces>
-    </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5">
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-          <PrivateAssets>all</PrivateAssets>
-        </PackageReference>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tasks" Version="9.0.0">
-            <PrivateAssets>all</PrivateAssets>
-            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>        
+        <PackageReference Include="Npgsql" Version="9.0.3" />        
     </ItemGroup>
 </Project>
