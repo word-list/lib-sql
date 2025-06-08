@@ -1,0 +1,27 @@
+name: Apply Migrations
+on:
+    workflow_dispatch: # manual triggers
+
+jobs:
+    migrate:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v4
+
+            - name: Setup .NET
+              uses: actions/setup-dotnet@v4
+              with:
+                dotnet-version: '8.0.x'
+
+            - name: Install EF Core CLI
+              run: dotnet tool install --global dotnet-EF
+
+            - name: Restore Dependencies
+              run: dotnet restore
+
+            - name: Apply Migrations
+              run: |
+                dotnet ef database update \
+                --project lib-sql \
+                --connection "${{ secrets.DB_CONNECTION_STRING }}"
