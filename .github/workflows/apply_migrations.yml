@@ -23,5 +23,4 @@ jobs:
             - name: Apply Migrations
               run: |
                 dotnet ef database update \
-                --project lib-sql \
                 --connection "${{ secrets.DB_CONNECTION_STRING }}"
