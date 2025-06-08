@@ -5,6 +5,8 @@ on:
 jobs:
     migrate:
         runs-on: ubuntu-latest
+        env:
+            DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v4
@@ -22,5 +24,4 @@ jobs:
 
             - name: Apply Migrations
               run: |
-                dotnet ef database update \
-                --connection "${{ secrets.DB_CONNECTION_STRING }}"
+                dotnet ef database update
