@@ -5,6 +5,7 @@ on:
 jobs:
     migrate:
         runs-on: ubuntu-latest
+        environment: staging
         env:
             DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
         steps:
