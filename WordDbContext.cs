@@ -31,11 +31,13 @@ public class WordDbContext : DbContext
 
         var connectionStringUri = new Uri(envConnectionString);
 
+        var userInfo = Uri.UnescapeDataString(connectionStringUri.UserInfo).Split(':');
+
         var builder = new NpgsqlConnectionStringBuilder
         {
             Host = connectionStringUri.Host,
-            Username = connectionStringUri.UserInfo.Split(':')[0],
-            Password = connectionStringUri.UserInfo.Split(':')[1],
+            Username = userInfo[0],
+            Password = userInfo[1],
             Database = connectionStringUri.LocalPath.Trim('/'),
             Port = connectionStringUri.Port,
             Timeout = 120,
