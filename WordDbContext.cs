@@ -31,30 +31,28 @@ public class WordDbContext : DbContext
     {
         var envConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 
-        if (string.IsNullOrEmpty(envConnectionString))
+        if (!string.IsNullOrEmpty(envConnectionString))
         {
-            throw new InvalidOperationException("DB_CONNECTION_STRING environment variable is not set.");
+            var connectionStringUri = new Uri(envConnectionString);
+
+            var userInfo = Uri.UnescapeDataString(connectionStringUri.UserInfo).Split(':');
+
+            var builder = new NpgsqlConnectionStringBuilder
+            {
+                Host = connectionStringUri.Host,
+                Username = userInfo[0],
+                Password = userInfo[1],
+                Database = connectionStringUri.LocalPath.Trim('/'),
+                Port = connectionStringUri.Port,
+                Timeout = 120,
+                SslMode = SslMode.VerifyFull
+            };
+
+            optionsBuilder
+                .UseNpgsql(builder.ToString())
+                // Fix issue introduced by locking in EF 9 - https://github.com/dotnet/efcore/issues/33731
+                .ReplaceService<IHistoryRepository, NonLockingNpgsqlHistoryRepository>();
         }
-
-        var connectionStringUri = new Uri(envConnectionString);
-
-        var userInfo = Uri.UnescapeDataString(connectionStringUri.UserInfo).Split(':');
-
-        var builder = new NpgsqlConnectionStringBuilder
-        {
-            Host = connectionStringUri.Host,
-            Username = userInfo[0],
-            Password = userInfo[1],
-            Database = connectionStringUri.LocalPath.Trim('/'),
-            Port = connectionStringUri.Port,
-            Timeout = 120,
-            SslMode = SslMode.VerifyFull
-        };
-
-        optionsBuilder
-            .UseNpgsql(builder.ToString())
-            // Fix issue introduced by locking in EF 9 - https://github.com/dotnet/efcore/issues/33731
-            .ReplaceService<IHistoryRepository, NonLockingNpgsqlHistoryRepository>();
     }
 
 
