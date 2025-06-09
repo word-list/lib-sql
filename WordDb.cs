@@ -75,7 +75,7 @@ public class WordDb
             select new { Word = w.Text, Type = wt };
 
         await using var typeCmd = new NpgsqlCommand(@"
-            UPSERT INTO word_types (text) 
+            UPSERT INTO word_types (name) 
             SELECT * FROM UNNEST(@typeArray)", conn, transaction);
 
         typeCmd.Parameters.AddWithValue("typeArray", wordTypes);
