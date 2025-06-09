@@ -49,7 +49,7 @@ public class WordDb
         }
     }
 
-    public async Task UpsertWordsAsync(params Word[] words)
+    public async Task<UpsertWordsResult> UpsertWordsAsync(params Word[] words)
     {
         await using var conn = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
 
@@ -65,7 +65,7 @@ public class WordDb
         cmd.Parameters.AddWithValue("offensivenessArray", words.Select(w => w.Offensiveness).ToArray());
         cmd.Parameters.AddWithValue("sentimentArray", words.Select(w => w.Sentiment).ToArray());
 
-        await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        var modifiedWordsCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         // Update word types
         var wordTypes = words.SelectMany(w => w.WordTypes).Distinct().ToArray();
@@ -80,7 +80,7 @@ public class WordDb
 
         typeCmd.Parameters.AddWithValue("typeArray", wordTypes);
 
-        await typeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        var modifiedWordTypesCount = await typeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         // Update word type memberships
         await using var wordWordTypeCmd = new NpgsqlCommand(@"
@@ -90,8 +90,15 @@ public class WordDb
         wordWordTypeCmd.Parameters.AddWithValue("wordTextArray", wordWordTypes.Select(wt => wt.Word).ToArray());
         wordWordTypeCmd.Parameters.AddWithValue("wordTypeNameArray", wordWordTypes.Select(wt => wt.Type).ToArray());
 
-        await wordWordTypeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        var modifiedWordWordTypesCount = await wordWordTypeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         await transaction.CommitAsync().ConfigureAwait(false);
+
+        return new UpsertWordsResult
+        {
+            ModifiedWordsCount = modifiedWordsCount,
+            ModifiedWordTypesCount = modifiedWordTypesCount,
+            ModifiedWordWordTypesCount = modifiedWordWordTypesCount
+        };
     }
 }
