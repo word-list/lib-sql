@@ -14,8 +14,10 @@ jobs:
 
             - name: Install CockroachDB Client
               run: |
-                curl https://binaries.cockroachdb.com/cockroach-latest.linux-amd64.tgz | tar xvz
-                sudo mv cockroach-latest.linux-amd64/cockroach /usr/local/bin/
+                  curl -O https://binaries.cockroachdb.com/cockroach-latest.linux-amd64.tgz
+                  tar -xvzf cockroach-latest.linux-amd64.tgz
+                  FOLDER=$(tar -tzf cockroach-latest.linux-amd64.tgz | head -1 | cut -f1 -d"/")
+                  sudo mv "$FOLDER/cockroach" /usr/local/bin/
 
             - name: Apply SQL
               run: |
