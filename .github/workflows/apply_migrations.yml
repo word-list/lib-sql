@@ -12,17 +12,14 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
 
-            - name: Setup .NET
-              uses: actions/setup-dotnet@v4
-              with:
-                dotnet-version: '8.0.x'
-
-            - name: Install EF Core CLI
-              run: dotnet tool install --global dotnet-EF
-
-            - name: Restore Dependencies
-              run: dotnet restore
-
-            - name: Apply Migrations
+            - name: Install CockroachDB Client
               run: |
-                dotnet ef database update
+                curl https://binaries.cockroachdb.com/cockroach-latest.linux-amd64.tgz | tar xvz
+                sudo mv cockroach-latest.linux-amd64/cockroach /usr/local/bin/
+
+            - name: Apply SQL
+              run: |
+                for file in $(ls Scripts/*.sql | sort); do
+                  echo "Applying $file..."
+                  cockroach sql --url="$DB_CONNECTION_STRING" --file="$file"
+                done
