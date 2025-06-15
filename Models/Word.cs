@@ -8,4 +8,12 @@ public class Word
     public int Sentiment { get; set; }
 
     public string[] WordTypes { get; set; } = [];
+
+
+    // Added in v0.3.2
+    public int Formality { get; set; }
+    public int CulturalSensitivity { get; set; }
+    public int Figurativeness { get; set; }
+    public int Complexity { get; set; }
+    public int Political { get; set; }
 }

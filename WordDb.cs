@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Npgsql;
 using WordList.Data.Sql.Models;
 
@@ -57,13 +58,27 @@ public class WordDb
 
         // Update words
         await using var cmd = new NpgsqlCommand(@"
-            UPSERT INTO words (text, commonness, offensiveness, sentiment)
-            SELECT * FROM UNNEST(@textArray, @commonnessArray, @offensivenessArray, @sentimentArray)", conn, transaction);
+            UPSERT INTO words 
+                (text, commonness, offensiveness, sentiment, 
+                 formality, culturalsensitivity, figurativeness, 
+                 complexity, political)
+            SELECT * FROM UNNEST
+                (@textArray, @commonnessArray, @offensivenessArray, @sentimentArray,
+                 @formalityArray, @culturalsensitivityArray, @figurativenessArray,
+                 @complexityArray, @politicalArray)", conn, transaction);
 
-        cmd.Parameters.AddWithValue("textArray", words.Select(w => w.Text).ToArray());
-        cmd.Parameters.AddWithValue("commonnessArray", words.Select(w => w.Commonness).ToArray());
-        cmd.Parameters.AddWithValue("offensivenessArray", words.Select(w => w.Offensiveness).ToArray());
-        cmd.Parameters.AddWithValue("sentimentArray", words.Select(w => w.Sentiment).ToArray());
+        void addParam<T>(string name, Func<Word, T> expr)
+            => cmd.Parameters.AddWithValue(name, words.Select(expr).ToArray());
+
+        addParam("textArray", w => w.Text);
+        addParam("commonnessArray", w => w.Commonness);
+        addParam("offensivenessArray", w => w.Offensiveness);
+        addParam("sentimentArray", w => w.Sentiment);
+        addParam("formalityArray", w => w.Formality);
+        addParam("culturalsensitivityArray", w => w.CulturalSensitivity);
+        addParam("figurativenessArray", w => w.Figurativeness);
+        addParam("complexityArray", w => w.Complexity);
+        addParam("politicalArray", w => w.Political);
 
         var modifiedWordsCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
