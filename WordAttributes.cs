@@ -6,7 +6,7 @@ using Amazon.DynamoDBv2.DataModel;
 
 public class WordAttributes
 {
-    private static readonly IDynamoDBContext s_dynamoDb = new DynamoDBContextBuilder().Build();
+    private static readonly DynamoDBContext s_dynamoDb = new DynamoDBContextBuilder().Build();
 
     private static Dictionary<string, WordAttribute> s_attributes = [];
     private static bool s_loaded = false;
