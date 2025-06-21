@@ -50,39 +50,9 @@ public class WordDb
         }
     }
 
-    public async Task<UpsertWordsResult> UpsertWordsAsync(params Word[] words)
+    private async Task<(int modifiedWordTypeCount, int modifiedWordWordTypeCount)>
+        UpsertWordTypesAsync(NpgsqlConnection conn, NpgsqlTransaction transaction, Word[] words)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
-
-        await using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
-
-        // Update words
-        await using var cmd = new NpgsqlCommand(@"
-            UPSERT INTO words 
-                (text, commonness, offensiveness, sentiment, 
-                 formality, culturalsensitivity, figurativeness, 
-                 complexity, political)
-            SELECT * FROM UNNEST
-                (@textArray, @commonnessArray, @offensivenessArray, @sentimentArray,
-                 @formalityArray, @culturalsensitivityArray, @figurativenessArray,
-                 @complexityArray, @politicalArray)", conn, transaction);
-
-        void addParam<T>(string name, Func<Word, T> expr)
-            => cmd.Parameters.AddWithValue(name, words.Select(expr).ToArray());
-
-        addParam("textArray", w => w.Text);
-        addParam("commonnessArray", w => w.Commonness);
-        addParam("offensivenessArray", w => w.Offensiveness);
-        addParam("sentimentArray", w => w.Sentiment);
-        addParam("formalityArray", w => w.Formality);
-        addParam("culturalsensitivityArray", w => w.CulturalSensitivity);
-        addParam("figurativenessArray", w => w.Figurativeness);
-        addParam("complexityArray", w => w.Complexity);
-        addParam("politicalArray", w => w.Political);
-
-        var modifiedWordsCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
-
-        // Update word types
         var wordTypes = words.SelectMany(w => w.WordTypes).Distinct().ToArray();
         var wordWordTypes =
             from w in words
@@ -95,7 +65,7 @@ public class WordDb
 
         typeCmd.Parameters.AddWithValue("typeArray", wordTypes);
 
-        var modifiedWordTypesCount = await typeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        var modifiedWordTypeCount = await typeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
 
         // Update word type memberships
         await using var wordWordTypeCmd = new NpgsqlCommand(@"
@@ -105,7 +75,39 @@ public class WordDb
         wordWordTypeCmd.Parameters.AddWithValue("wordTextArray", wordWordTypes.Select(wt => wt.Word).ToArray());
         wordWordTypeCmd.Parameters.AddWithValue("wordTypeNameArray", wordWordTypes.Select(wt => wt.Type).ToArray());
 
-        var modifiedWordWordTypesCount = await wordWordTypeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        var modifiedWordWordTypeCount = await wordWordTypeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+        return (modifiedWordTypeCount, modifiedWordWordTypeCount);
+    }
+
+    public async Task<UpsertWordsResult> UpsertWordsAsync(params Word[] words)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync().ConfigureAwait(false);
+        await using var transaction = await conn.BeginTransactionAsync().ConfigureAwait(false);
+
+        var attributes = await WordAttributes.GetAllAsync().ConfigureAwait(false);
+
+        var attributeNames = string.Join(", ", attributes.Select(a => a.Name));
+        var attributeVarNames = string.Join(", ", attributes.Select(a => $"@{a.Name}Array"));
+
+        // Update words
+        await using var cmd = new NpgsqlCommand(@$"
+            UPSERT INTO words 
+                (text, {attributeNames})
+            SELECT * FROM UNNEST
+                (@textArray, {attributeVarNames})", conn, transaction);
+
+        cmd.Parameters.AddWithValue("textArray", words.Select(w => w.Text).ToArray());
+
+        foreach (var attr in attributes)
+        {
+            cmd.Parameters.AddWithValue($"{attr.Name}Array",
+                words.Select(w => w.Attributes.TryGetValue(attr.Name, out var value) ? value : 0));
+        }
+
+        var modifiedWordsCount = await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+
+        var (modifiedWordTypesCount, modifiedWordWordTypesCount) = await UpsertWordTypesAsync(conn, transaction, words).ConfigureAwait(false);
 
         await transaction.CommitAsync().ConfigureAwait(false);
 

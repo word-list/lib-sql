@@ -32,6 +32,10 @@
         <DebugSymbols>false</DebugSymbols>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Npgsql" Version="9.0.3" />        
+        <PackageReference Include="Npgsql" Version="9.0.3" />
+        <PackageReference Include="Amazon.Lambda.RuntimeSupport" Version="1.13.0" />
+        <PackageReference Include="Amazon.Lambda.Core" Version="2.5.1" />
+        <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.4" />    
+        <PackageReference Include="AWSSDK.DynamoDBv2" Version="4.0.1" />
     </ItemGroup>
 </Project>
